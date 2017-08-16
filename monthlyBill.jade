@@ -1,0 +1,248 @@
+extends bootstrap
+
+block css
+	link(rel='stylesheet' href='/assets/font-awesome/css/font-awesome.min.css')
+	link(rel='stylesheet' href='/stylesheets/montylyBill.css')
+
+block title
+	title= title
+
+block content
+	.container(style="background: #f5f5f9;")
+		.row
+			.col-xs-6
+				h5.calendar
+			.col-xs-6.text-right
+				h5.dropdown
+					i#dropdownMenu.fa.fa-calendar.dropdown-toggle(role='button' aria-hidden='true' data-toggle='dropdown', aria-haspopup='true', aria-expanded='true')
+					ul.dropdown-menu(aria-labelledby='dropdownMenu')
+						each month, index in monthes
+							li(data-index= index) #{month}
+
+		.row(style="background: #fff; margin-bottom: 10px; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd;")
+			.col-xs-12
+				.row(style="border-bottom: 1px solid #eee;")
+					.col-xs-12
+						h5.consumption
+				.row
+					.col-xs-12
+						#c1
+		.row(style="background: #fff; margin-bottom: 10px; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd;")
+			.col-xs-12
+				.row(style="border-bottom: 1px solid #eee;")
+					.col-xs-6
+						h5 总消费
+					.col-xs-6.text-right
+						h5.total
+				.row
+					.col-xs-12
+						#c2
+
+block script
+	script(src='https://a.alipayobjects.com/g/datavis/g2/2.3.7/g2.js')
+	script.
+		var current;
+	script.
+		var data = !{totalData}.data;
+		var dash = !{totalData}.dash;
+		var first = !{totalData}.first;
+		var last = !{totalData}.last;
+		var totalChart = new G2.Chart({
+			id: 'c1',
+			forceFit: true,
+			height: 150,
+			plotCfg: {
+				margin: [40, 0, 40, -70]
+			}
+		});
+		totalChart.legend(false);
+
+		var view1 = totalChart.createView();
+		view1.source(data);
+		view1.line().position('month*amount').label('amount', function(val) {
+			return val;
+		}, {
+			offset: 26,
+			custom: true,
+			renderer: function(text, item) {
+				var month = item.point['month'];
+				console.log(current);
+				console.log(month);
+				if (current == month) {
+				  return '<span style="color: #ff7848; font-size: 1.3rem;">' + text + '</span>';
+			  }
+
+			  if (first == month || last == month) {
+				  return '<span style="color: #ff7848; font-size: 1.3rem;">' + '' + '</span>';
+			  }
+
+				return '<span style="color: #888; font-size: 1rem;">' + text + '</span>';
+			}
+		}).size(2).color('c', function(c) {
+			if (c === 'fail') {
+				return '#ff7848';
+			}
+
+			return '#ff7848';
+		}).shape('c', function(c) {
+			if (c === 'fail') {
+				return 'dash'
+			}
+
+			return 'line';
+		});
+
+		view1.point().position('month*amount').color('c', function(c) {
+			if (c === 'fail') {
+				return '#ff7848';
+			}
+
+			if (c === 'spec') {
+				return 'rgba(255, 255, 255, 0)';
+			}
+
+			return '#ff7848';
+		}).shape('c', function(c) {
+			if (c === 'fail') {
+				return 'hollowCircle';
+			}
+
+			if (c === 'spec') {
+				return null;
+			}
+
+			return 'circle';
+		});
+
+		view1.tooltip(false);
+		view1.axis('amount', false);
+		view1.axis('month', {
+			line: null,
+		  tickLine: null,
+		  title: null,
+		  formatter: function(val) {
+		  	if (first == val) {
+			  	return '';
+		  	}
+
+		  	return Number(val) + '月';
+		  }
+		});
+
+		var view2 = totalChart.createView();
+		view2.source(dash);
+		view2.line().position('month*amount').color('#ffe5e5').size(2).shape('c', function (c) {
+			if (c === 'yes') {
+				return 'line';
+			}
+
+			return 'dash';
+		});
+		var tmp = 'flag';
+		var tmp1 = 'flag';
+		view2.point().position('month*amount').shape('c', function(c) {
+			if (c === 'fail' && tmp == 'fail') {
+				tmp = c;
+				return 'hollowCircle';
+			}
+
+			tmp = c;
+			return 'circle';
+		}).color('c', function(c) {
+			if (c === 'fail' && tmp1 === 'yes') {
+				tmp1 = c;
+				return '#ff7848';
+			}
+
+			if (c === 'yes' && tmp1 === 'yes') {
+				tmp1 = c;
+				return '#ff7848';
+			}
+
+			if (c === 'yes' && tmp1 === 'flag') {
+				tmp1 = c;
+				return 'rgba(255, 255, 255, 0)';
+			}
+
+			tmp1 = c;
+			return '#ffd7c8';
+		});
+		view2.tooltip(false);
+		view2.axis('amount', false);
+		view2.axis('month', {
+			line: null,
+		  tickLine: null,
+		  title: null,
+		  formatter: function(val) {
+		  	if (first == val) {
+			  	return '';
+		  	}
+
+		  	return Number(val) + '月';
+		  }
+		});
+
+		totalChart.render();
+	script.
+		var data = [];
+		var Stat = G2.Stat;
+		var singleChart = new G2.Chart({
+			id: 'c2',
+			forceFit: true,
+			height: 400,
+			plotCfg: {
+				margin: [30, 80, 40, 80]
+			}
+		});
+		singleChart.source(data);
+		singleChart.coord('theta', {
+			radius: 0.9,
+			inner: 0.40
+		});
+		singleChart.legend('type', {
+			position: 'bottom',
+			marker: 'square',
+			word: {
+				fill: '#888'
+			}
+		});
+		singleChart.tooltip({
+			title: null,
+			map: {
+				value: 'amount'
+			}
+		});
+		singleChart.tooltip(false);
+		singleChart.intervalStack()
+		.position(Stat.summary.percent('amount'))
+		.color('type', ['#f05a4a', '#1dac91', '#00a5e6', '#3474c4'])
+		.label('type*..percent', {
+			custom: true,
+		  renderer: function(text, item, index) {
+		  	var percent = item.point['..percent'];
+		  	percent = (percent * 100).toFixed(2) + '%';
+
+		  	return '<span style="color: #888; font-size: 1rem;">' + text + '</span><span style="color: #888; font-size: 1rem;">' + percent + '</span>';
+		  },
+		  offset: 30
+		});
+		singleChart.render();
+	script.
+		$(function() {
+			var data= !{data};
+			console.log(data);
+			$('ul.dropdown-menu li').bind('click', function () {
+				var index = Number($(this).attr('data-index'));
+				console.log(data);
+				console.log(index);
+				var item = data[index];
+				console.log(item);
+				$('.calendar').text(item.month);
+				$('.consumption').text(item.month.substring(0, 2) + '月消费情况');
+				$('.total').text(item.total);
+				singleChart.changeData(item.singleData);
+				current = item.month.substring(0, 2);
+				totalChart.repaint();
+			});
+			$('ul.dropdown-menu li:first').trigger("click");
+		});
