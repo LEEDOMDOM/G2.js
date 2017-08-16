@@ -1,0 +1,192 @@
+extends layout
+
+block title
+  title= title
+
+block css
+  link(rel='stylesheet' href='/stylesheets/style.css')
+
+block content
+  .container
+    .row
+      .col
+        #c1
+    .row
+      .col
+        #c2
+
+block script
+  script(src="https://gw.alipayobjects.com/as/g/datavis/g2/2.3.8/index.js")
+  script.
+    var data = !{lineData}.data;
+    var dash = !{lineData}.dash;
+
+    var firstAmount = !{lineData}.data[0].amount;
+    console.log(firstAmount);
+    var firstMonth = !{lineData}.data[0].month;
+    console.log(firstMonth);
+
+    var lineChart = new G2.Chart({
+      id: 'c1',
+      forceFit: true,
+      height: 450,
+      plotCfg: {
+        margin: [60, 10, 60, 0]
+      }
+    });
+    lineChart.legend(false);
+    lineChart.tooltip(false);
+
+    var view1 = lineChart.createView();
+    view1.source(data);
+    view1.axis('month', {
+      title: null,
+      tickLine: null,
+      line: null,
+      formatter: function(val) {
+        console.log(val);
+        if(val === firstMonth) {
+          return null;
+        }
+        return Number(val) + '月';
+      }
+    });
+    view1.axis('amount', false);
+
+    view1.line().position('month*amount').size(2)
+      .color('shape', function(shape) {
+        if(shape === 'no') {
+          return '#dee6f5';
+        }
+        return '#4e7ccc';
+      })
+      .shape('shape',
+      function(shape) {
+        if(shape === 'fail') {
+          return 'dash';
+        }
+        return 'line';
+      }
+    );
+
+    view1.point().position('month*amount')
+    	.color('shape', function(shape){
+    	  if(shape === 'no') {
+    	    return '#fff';
+    	  }
+    	  return '#4e7ccc';
+    	})
+      .shape('shape',
+        function(shape) {
+          if(shape === 'yes'){
+            return 'hollowCircle';
+          }
+          return 'circle';
+        })
+      .label('amount', function(val) {
+        if(val === firstAmount) {
+          return null;
+        }
+        return val + '元';
+      },{
+        offset: 30,
+      }
+    );
+
+    var view2 = lineChart.createView();
+    view2.source(dash);
+    view2.axis('month', {
+      title: null,
+      tickLine: null,
+      line: null,
+      formatter: function(val) {
+        if(val === firstMonth) {
+          return null;
+        }
+        return Number(val) + '月';
+      }
+    });
+    view2.axis('amount', false);
+
+    view2.line().position('month*amount').size(2)
+      .color('shape', function(shape) {
+        if(shape === 'no') {
+          return '#dee6f5';
+        }
+        return '#4e7ccc';
+      })
+      .shape('shape',
+      function(shape) {
+        if(shape === 'fail') {
+          return 'dash';
+        }
+        return 'line';
+      }
+    );
+
+    view2.point().position('month*amount')
+    	.color('shape', function(shape){
+    	  if(shape === 'no') {
+    	    return '#fff';
+    	  }
+    	  return '#4e7ccc';
+    	})
+      .shape('shape',
+        function(shape) {
+          if(shape === 'fail' ){
+            return 'hollowCircle';
+          }
+          return 'circle';
+      }
+    );
+
+
+
+
+    lineChart.render();
+
+  script.
+    var data = !{pieData};
+    var Stat = G2.Stat;
+
+    var pieChart = new G2.Chart({
+      id: 'c2',
+      forceFit: true,
+      height: 450,
+      plotCfg: {
+        margin: [80, 80, 80, 80]
+      }
+    });
+    pieChart.source(data);
+    pieChart.legend('name', {
+      position: 'bottom',
+      marker: 'bowtie',
+      itemWrap: true,
+      formatter: function(val) {
+        for(var i = 0, len = data.length; i < len; i++) {
+          var obj = data[i];
+          if (obj.name === val) {
+            return val + ': ' + obj.value + '%';
+          }
+        }
+      }
+    });
+    pieChart.tooltip(false);
+
+    pieChart.coord('theta', {
+      radius: 0.8,
+      inner: 0.4
+    });
+    pieChart.intervalStack()
+      .position(Stat.summary.percent('value'))
+      .color('name',  ['#f05a4a', '#1dac91', '#00a5e6', '#3474c4', '#454215', '#ff7848'])
+      .label('name*..percent',function(name, percent){
+      percent = (percent * 100).toFixed(2) + '%';
+      return name + ' ' + percent;
+    });
+    pieChart.render();
+
+    // 设置默认选中
+    //- var geom = pieChart.getGeoms()[0]; // 获取所有的图形
+    //- var items = geom.getData(); // 获取图形对应的数据
+    //- geom.setSelected(items[1]); // 设置选中
